@@ -76,12 +76,35 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  Future<void> toggleIsBought(int id, bool currentStatus, String name) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$apiUrl/$id'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'isBought': !currentStatus
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        fetchGroceryItems(); // Refresh the list after updating
+      } else {
+        throw Exception(response.statusCode);
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: Column(
         children: [
+          // 🔹 Input Section
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -106,6 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
           ),
+          // 🔹 List Section
           Expanded(
             child: _items.isEmpty
                 ? const Center(child: CircularProgressIndicator())
@@ -115,10 +139,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 final item = _items[index];
                 return ListTile(
                   title: Text(item['name']),
-                  trailing: Icon(
-                    item['isBought']
-                        ? Icons.check_box
-                        : Icons.check_box_outline_blank,
+                  trailing: IconButton(
+                    icon: Icon(
+                      item['isBought']
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
+                    ),
+                    onPressed: () {
+                      toggleIsBought(item['id'], item['isBought'], item['name']);
+                    },
                   ),
                 );
               },
