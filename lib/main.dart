@@ -76,27 +76,35 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> toggleIsBought(int id, bool currentStatus, String name) async {
+  Future<void> updateGroceryItem(int id, String name, bool isBought) async {
+    setState(() {
+      final index = _items.indexWhere((item) => item['id'] == id);
+      if (index != -1) {
+        _items[index]['isBought'] = !isBought;
+      }
+    });
+
     try {
       final response = await http.put(
         Uri.parse('$apiUrl/$id'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': name,
-          'isBought': !currentStatus
-        }),
+        body: jsonEncode({'id': id, 'name': name, 'isBought': !isBought}),
       );
 
-      if (response.statusCode == 200) {
-        fetchGroceryItems(); // Refresh the list after updating
-      } else {
-        throw Exception(response.statusCode);
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update item');
       }
     } catch (e) {
       print('Error: $e');
+      // Optional: revert state on failure
+      setState(() {
+        final index = _items.indexWhere((item) => item['id'] == id);
+        if (index != -1) {
+          _items[index]['isBought'] = isBought;
+        }
+      });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(title: Text(widget.title)),
       body: Column(
         children: [
-          // 🔹 Input Section
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -129,7 +136,6 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
           ),
-          // 🔹 List Section
           Expanded(
             child: _items.isEmpty
                 ? const Center(child: CircularProgressIndicator())
@@ -146,7 +152,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           : Icons.check_box_outline_blank,
                     ),
                     onPressed: () {
-                      toggleIsBought(item['id'], item['isBought'], item['name']);
+                      updateGroceryItem(
+                        item['id'],
+                        item['name'],
+                        item['isBought'],
+                      );
                     },
                   ),
                 );
