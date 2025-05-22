@@ -96,7 +96,6 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     } catch (e) {
       print('Error: $e');
-      // Optional: revert state on failure
       setState(() {
         final index = _items.indexWhere((item) => item['id'] == id);
         if (index != -1) {
